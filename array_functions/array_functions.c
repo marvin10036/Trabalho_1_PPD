@@ -18,3 +18,10 @@ int* copy_array(int* original_array_pointer, int number_of_elements){
   return copied_array;
 }
 
+void print_array(int* array, int number_of_elements){
+  for(int i = 0; i < number_of_elements; i++){
+    printf("%d, ", array[i]);
+  }
+  printf("\n");
+}
+

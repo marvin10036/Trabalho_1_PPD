@@ -8,3 +8,5 @@ int* generate_array(int array_size);
 
 int* copy_array(int* original_array_pointer, int number_of_elements);
 
+void print_array(int* array, int number_of_elements);
+
