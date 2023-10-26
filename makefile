@@ -1,5 +1,5 @@
-SOURCE_main := $(shell find ./ -name '*.c')
+SOURCE_main := $(shell find ./ -name '*.cpp')
 
 output: $(SOURCE_main)
-		gcc -o compilado $(SOURCE_main)
+		g++ -o compilado $(SOURCE_main)
 
