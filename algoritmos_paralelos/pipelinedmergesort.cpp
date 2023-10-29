@@ -109,10 +109,10 @@ void pFinal(AtributosLista atributo_lista){
 }
 
 
-int main() {
+int pipelined_mergesort(int *lista, int len_lista) {
     AtributosLista atributo_lista;
-    atributo_lista.len_lista = 7;
-    atributo_lista.lista = new int[atributo_lista.len_lista] {121,2,21,4,45,-6,7};
+    atributo_lista.len_lista = len_lista;
+    atributo_lista.lista = new int[atributo_lista.len_lista] = lista; //{121,2,21,4,45,-6,7};
     atributo_lista.numero_threads = 5;//static_cast<int>(ceil(log2(atributo_lista.len_lista))) + 1;
     atributo_lista.pipeline = new queue<int>[10];//[(atributo_lista.numero_threads-1)*2];
     thread threads[atributo_lista.numero_threads];
