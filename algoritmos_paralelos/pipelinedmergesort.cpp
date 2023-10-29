@@ -104,24 +104,44 @@ void pMeio(int id, AtributosLista atributosLista){
     }
 }
 
-void pFinal(AtributosLista atributo_lista){
-
+void pFinal(int id, AtributosLista atributosLista){
+    int quantidade_alterada= 0;
+    queue<int> &esquerda_cima = atributosLista.pipeline[2*(id-1)];
+    queue<int> &esquerda_baixo = atributosLista.pipeline[2*(id)-1];
+    while (quantidade_alterada != atributosLista.len_lista) {
+        if ((esquerda_cima.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_baixo.empty()) ||
+            (esquerda_baixo.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_cima.empty())) {
+            do {
+                if (esquerda_cima.front() >= esquerda_baixo.front()){
+                    atributosLista.lista[atributosLista.len_lista-quantidade_alterada-1] = esquerda_cima.front();
+                    esquerda_cima.pop();
+                }
+                else{
+                    atributosLista.lista[atributosLista.len_lista-quantidade_alterada-1] = esquerda_baixo.front();
+                    esquerda_baixo.pop();
+                }
+                quantidade_alterada++;
+            }while ((quantidade_alterada%(static_cast<int>(pow(2,id))))!=0);
+        }
+    }
 }
 
 
 int pipelined_mergesort(int *lista, int len_lista) {
     AtributosLista atributo_lista;
     atributo_lista.len_lista = len_lista;
-    atributo_lista.lista = new int[atributo_lista.len_lista] = lista; //{121,2,21,4,45,-6,7};
-    atributo_lista.numero_threads = 5;//static_cast<int>(ceil(log2(atributo_lista.len_lista))) + 1;
-    atributo_lista.pipeline = new queue<int>[10];//[(atributo_lista.numero_threads-1)*2];
+    atributo_lista.lista = lista; //{121,2,21,4,45,-6,7};
+    atributo_lista.numero_threads = static_cast<int>(ceil(log2(atributo_lista.len_lista))+1);
+    atributo_lista.pipeline = new queue<int>[(atributo_lista.numero_threads-1)*2];
     thread threads[atributo_lista.numero_threads];
+//    cout << atributo_lista.numero_threads << endl;
+//    cout << (atributo_lista.numero_threads-1)*2 << endl;
 
     for (int i = 0; i < atributo_lista.numero_threads; i++) {
         if (i == 0)
             threads[i] = thread(pInicio, atributo_lista);
         else if (i == atributo_lista.numero_threads-1){
-            threads[i] = thread(pFinal, atributo_lista);
+            threads[i] = thread(pFinal, i, atributo_lista);
         }
         else {
             threads[i] = thread(pMeio,i, atributo_lista);
@@ -132,10 +152,15 @@ int pipelined_mergesort(int *lista, int len_lista) {
         threads[i].join();
     }
 
-    while (!atributo_lista.pipeline[6].empty()) {
-        cout << atributo_lista.pipeline[6].front() << endl;
-        atributo_lista.pipeline[6].pop();
-    }
+//    while (!atributo_lista.pipeline[(atributo_lista.numero_threads-1)*2-2].empty()) {
+//        cout << atributo_lista.pipeline[(atributo_lista.numero_threads-1)*2-2].front() << endl;
+//        atributo_lista.pipeline[(atributo_lista.numero_threads-1)*2-2].pop();
+//    }
+//    for (int i = 0; i<(atributo_lista.numero_threads-1)*2;i++){
+//        if (!atributo_lista.pipeline[i].empty()){
+//            cout<< "index: "<< i << endl;
+//            }
+//    }
 
 
     return 0;
