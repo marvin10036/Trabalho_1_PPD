@@ -4,6 +4,7 @@
 #include <time.h>
 #include "array_functions/array_functions.h"
 #include "algoritmos_sequenciais/bubblesort.h"
+#include "algoritmos_sequenciais/quicksort.h"
 
 int main(int argc, char** argv){
   int number_of_elements = 50;
@@ -12,14 +13,19 @@ int main(int argc, char** argv){
   //trabalharemos com cópias para que todos os algoritmos tenham um array
   //desordenado a princípio
   int* copia_1 = copy_array(array, number_of_elements);
+  int* copia_2 = copy_array(array2, number_of_elements2);
 
   printf("printando array copiado:\n");
   print_array(copia_1, number_of_elements);
 
   bubblesort(copia_1, number_of_elements);
+  quicksort(copia_2, 0, number_of_elements2);
 
-  printf("printando array copiado ordenado:\n");
+  printf("printando array copiado ordenado por bubblesort:\n");
   print_array(copia_1, number_of_elements);
+
+  printf("printando array copiado ordenado por quicksort:\n");
+  print_array(copia_2, number_of_elements2);
 
   return 0;
 }
