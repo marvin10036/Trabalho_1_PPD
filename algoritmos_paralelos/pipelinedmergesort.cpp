@@ -47,6 +47,8 @@ void* pMeio(void* arg){
                 (esquerda_baixo.size() >= (static_cast<int>(pow(2,(id-1)))) && !esquerda_cima.empty())){
             do {
                 if ((!esquerda_cima.empty())&&(!esquerda_baixo.empty())){
+//                    cout << esquerda_cima.front() << endl;
+//                    cout << esquerda_baixo.front() << endl;
                     if (esquerda_cima.front() >= esquerda_baixo.front()){
                         if (!(posicao%2)) {
                             direita_cima.push(esquerda_cima.front());
@@ -114,23 +116,56 @@ void* pMeio(void* arg){
 void* pFinal(void*arg){
     int* param = (static_cast<int*>(arg));
     int id = *param;
-    int quantidade_alterada= 0;
+    int quantidade_enviada= 0;
+    int cima = 0;
+    int baixo = 0;
     queue<int> &esquerda_cima = pipeline[2*(id-1)];
     queue<int> &esquerda_baixo = pipeline[2*(id)-1];
-    while (quantidade_alterada != len_lista) {
+    while (quantidade_enviada != len_lista) {
         if ((esquerda_cima.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_baixo.empty()) ||
             (esquerda_baixo.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_cima.empty())) {
             do {
-                if (esquerda_cima.front() >= esquerda_baixo.front()){
-                    lista[len_lista-quantidade_alterada-1] = esquerda_cima.front();
-                    esquerda_cima.pop();
+                if ((!esquerda_cima.empty())&&(!esquerda_baixo.empty())){
+//                    cout << esquerda_cima.front() << endl;
+//                    cout << esquerda_baixo.front() << endl;
+                    if (esquerda_cima.front() >= esquerda_baixo.front()){
+                        lista[len_lista-quantidade_enviada-1] = esquerda_cima.front();
+                        esquerda_cima.pop();
+                        cima++;
+                    }else {
+                        lista[len_lista-quantidade_enviada-1] = esquerda_baixo.front();
+                        esquerda_baixo.pop();
+                        baixo++;
+                    }
+                    quantidade_enviada++;
+
+                    if (cima == (static_cast<int>(pow(2,id)))/2){
+                        while (quantidade_enviada%(static_cast<int>(pow(2,id)))!=0){
+                            if (!esquerda_baixo.empty()){
+                                lista[len_lista-quantidade_enviada-1] = esquerda_baixo.front();
+                                esquerda_baixo.pop();
+
+                                baixo++;
+                                quantidade_enviada++;
+                            }
+                        }
+                        cima = 0;
+                        baixo = 0;
+                    } else if (baixo == (static_cast<int>(pow(2,id)))/2){
+                        while (quantidade_enviada%(static_cast<int>(pow(2,id)))!=0){
+                            if (!esquerda_cima.empty()){
+                                lista[len_lista-quantidade_enviada-1] = esquerda_cima.front();
+                                esquerda_cima.pop();
+                                cima++;
+                                quantidade_enviada++;
+                            }
+                        }
+                        cima = 0;
+                        baixo =0;
+                    }
+
                 }
-                else{
-                    lista[len_lista-quantidade_alterada-1] = esquerda_baixo.front();
-                    esquerda_baixo.pop();
-                }
-                quantidade_alterada++;
-            }while ((quantidade_alterada%(static_cast<int>(pow(2,id))))!=0);
+            } while ((quantidade_enviada%(static_cast<int>(pow(2,id))))!=0);
         }
     }
     pthread_exit(NULL);
@@ -142,6 +177,8 @@ int pipelinedmergesort(int *lista1, int len_lista1) {
     len_lista = len_lista1;
     lista = lista1; //{121,2,21,4,45,-6,7};
     numero_threads = static_cast<int>(ceil(log2(len_lista))+1);
+//    cout << numero_threads << endl;
+//    cout << (numero_threads-1)*2 <<endl;
 //    atributo_lista.pipeline = new queue<int>[(atributo_lista.numero_threads-1)*2];
     pthread_t threads[numero_threads];
     int thread_ids[numero_threads];

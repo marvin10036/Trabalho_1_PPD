@@ -6,4 +6,4 @@
 #include <limits>
 #include <pthread.h>
 
-int* pipelined_mergesort(int *lista, int len_lista);
+int* pipelinedmergesort(int *lista, int len_lista);
