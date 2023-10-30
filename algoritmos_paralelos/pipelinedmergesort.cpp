@@ -1,4 +1,5 @@
-#include <thread>
+#include <pthread.h>
+#include "pipelinedmergesort.h"
 #include <mutex>
 #include <iostream>
 #include <cmath>
@@ -12,32 +13,36 @@ std::mutex myMutex;
 //int pipeline[tamanho_pipeline];
 //mutex lista_mutex[tamanho_lista];
 //int lista[tamanho_lista] = {10,9,3,4,5,2,6,1,8,7};
+queue<int>* pipeline{};
+int len_lista;
+int* lista{};
+int numero_threads{};
 
-struct AtributosLista {
-    int len_lista = 10;
-    int* lista{};
-    int lista_ordenada = 0;
-    int numero_threads{};
-    queue<int>* pipeline{};
-};
 
-void pInicio(AtributosLista atributosLista){
-    for (int i=0; i< atributosLista.len_lista; i++){
-        atributosLista.pipeline[i%2].push(atributosLista.lista[atributosLista.len_lista-i-1]);
+void* pInicio(void* arg){
+
+    for (int i=0; i< len_lista; i++){
+//        cout << i%2 << endl;
+//        cout << atributosLista.pipeline[i%2].front()<< endl;
+//        cout << atributosLista.lista[atributosLista.len_lista-i-1]<< endl;
+        pipeline[i%2].push(lista[len_lista-i-1]);
     }
+    pthread_exit(NULL);
 }
 
-void pMeio(int id, AtributosLista atributosLista){
+void* pMeio(void* arg){
+    int* param = (static_cast<int*>(arg));
+    int id = *param;
     int quantidade_enviada = 0;
     int posicao = 0;
     int cima = 0;
     int baixo = 0;
-    queue<int> &esquerda_cima = atributosLista.pipeline[2*(id-1)];
-    queue<int> &esquerda_baixo = atributosLista.pipeline[2*(id)-1];
-    queue<int> &direita_cima = atributosLista.pipeline[2*id];
-    queue<int> &direita_baixo = atributosLista.pipeline[2*id+1];
+    queue<int> &esquerda_cima = pipeline[2*(id-1)];
+    queue<int> &esquerda_baixo = pipeline[2*(id)-1];
+    queue<int> &direita_cima = pipeline[2*id];
+    queue<int> &direita_baixo = pipeline[2*id+1];
 
-    while (atributosLista.len_lista != quantidade_enviada){
+    while (len_lista != quantidade_enviada){
         if ((esquerda_cima.size() >= (static_cast<int>(pow(2,(id-1)))) && !esquerda_baixo.empty()) ||
                 (esquerda_baixo.size() >= (static_cast<int>(pow(2,(id-1)))) && !esquerda_cima.empty())){
             do {
@@ -102,54 +107,61 @@ void pMeio(int id, AtributosLista atributosLista){
             posicao++;
         }
     }
+    pthread_exit(NULL);
+
 }
 
-void pFinal(int id, AtributosLista atributosLista){
+void* pFinal(void*arg){
+    int* param = (static_cast<int*>(arg));
+    int id = *param;
     int quantidade_alterada= 0;
-    queue<int> &esquerda_cima = atributosLista.pipeline[2*(id-1)];
-    queue<int> &esquerda_baixo = atributosLista.pipeline[2*(id)-1];
-    while (quantidade_alterada != atributosLista.len_lista) {
+    queue<int> &esquerda_cima = pipeline[2*(id-1)];
+    queue<int> &esquerda_baixo = pipeline[2*(id)-1];
+    while (quantidade_alterada != len_lista) {
         if ((esquerda_cima.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_baixo.empty()) ||
             (esquerda_baixo.size() >= (static_cast<int>(pow(2, (id - 1)))) && !esquerda_cima.empty())) {
             do {
                 if (esquerda_cima.front() >= esquerda_baixo.front()){
-                    atributosLista.lista[atributosLista.len_lista-quantidade_alterada-1] = esquerda_cima.front();
+                    lista[len_lista-quantidade_alterada-1] = esquerda_cima.front();
                     esquerda_cima.pop();
                 }
                 else{
-                    atributosLista.lista[atributosLista.len_lista-quantidade_alterada-1] = esquerda_baixo.front();
+                    lista[len_lista-quantidade_alterada-1] = esquerda_baixo.front();
                     esquerda_baixo.pop();
                 }
                 quantidade_alterada++;
             }while ((quantidade_alterada%(static_cast<int>(pow(2,id))))!=0);
         }
     }
+    pthread_exit(NULL);
+
 }
 
 
-int pipelined_mergesort(int *lista, int len_lista) {
-    AtributosLista atributo_lista;
-    atributo_lista.len_lista = len_lista;
-    atributo_lista.lista = lista; //{121,2,21,4,45,-6,7};
-    atributo_lista.numero_threads = static_cast<int>(ceil(log2(atributo_lista.len_lista))+1);
-    atributo_lista.pipeline = new queue<int>[(atributo_lista.numero_threads-1)*2];
-    thread threads[atributo_lista.numero_threads];
-//    cout << atributo_lista.numero_threads << endl;
-//    cout << (atributo_lista.numero_threads-1)*2 << endl;
+int pipelinedmergesort(int *lista1, int len_lista1) {
+    len_lista = len_lista1;
+    lista = lista1; //{121,2,21,4,45,-6,7};
+    numero_threads = static_cast<int>(ceil(log2(len_lista))+1);
+//    atributo_lista.pipeline = new queue<int>[(atributo_lista.numero_threads-1)*2];
+    pthread_t threads[numero_threads];
+    int thread_ids[numero_threads];
 
-    for (int i = 0; i < atributo_lista.numero_threads; i++) {
+    pipeline = new queue<int>[(numero_threads-1)*2];
+
+    for (int i = 0; i < numero_threads; i++) {
+        thread_ids[i] = i;
         if (i == 0)
-            threads[i] = thread(pInicio, atributo_lista);
-        else if (i == atributo_lista.numero_threads-1){
-            threads[i] = thread(pFinal, i, atributo_lista);
+            pthread_create(&threads[i], NULL, pInicio, (void*)&thread_ids[i]);
+        else if (i == numero_threads-1){
+            pthread_create(&threads[i], NULL, pFinal, (void*)&thread_ids[i]);
         }
         else {
-            threads[i] = thread(pMeio,i, atributo_lista);
+            pthread_create(&threads[i], NULL, pMeio, (void*)&thread_ids[i]);
         }
     }
 
-    for (int i = 0; i < atributo_lista.numero_threads; i++) {
-        threads[i].join();
+    for (int i = 0; i < numero_threads; i++) {
+        pthread_join(threads[i], NULL);
     }
 
 //    while (!atributo_lista.pipeline[(atributo_lista.numero_threads-1)*2-2].empty()) {
